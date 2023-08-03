@@ -1,0 +1,44 @@
+service: auction-service
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  deploymentBucket:
+    name: arun-practice
+  deploymentPrefix: lambda
+  stage: ${opt:stage, 'dev'}
+  region: ap-south-1
+  environment:
+    AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.name}
+  iamRoleStatements:
+    - ${file(iam/AuctionsTableIAM.yml):AuctionTableIAM}
+
+resources:
+  Resources:
+    AuctionsTable: ${file(resources/AuctionsTableResource.yml):AuctionsTableResource}
+
+functions:
+  hello:
+    handler: src/index.hello
+    events:
+      - http:
+          method: GET
+          path: /hello
+  createAuction:
+    handler: src/index.createAuction
+    events:
+      - http:
+          method: POST
+          path: /auction
+  getAuctions:
+    handler: src/index.getAuctions
+    events:
+      - http:
+          method: GET
+          path: /auction
+
+custom:
+  AuctionsTable:
+    name: !Ref AuctionsTable
+    arn: !GetAtt AuctionsTable.Arn
