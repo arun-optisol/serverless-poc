@@ -1,4 +1,4 @@
-service: auction-service
+service: api-service
 frameworkVersion: '3'
 
 provider:
@@ -6,7 +6,7 @@ provider:
   runtime: nodejs18.x
   deploymentBucket:
     name: arun-practice
-  deploymentPrefix: lambda
+  deploymentPrefix: lambda/auction-service
   stage: ${opt:stage, 'dev'}
   region: ap-south-1
   environment:
@@ -17,6 +17,12 @@ provider:
 resources:
   Resources:
     AuctionsTable: ${file(resources/AuctionsTableResource.yml):AuctionsTableResource}
+  Outputs:
+    AuctionsTableArn:
+      Description: 'AuctionsTable arn'
+      Value: !GetAtt AuctionsTable.Arn
+      Export:
+        Name: AuctionsTableArn-${self:provider.stage}
 
 functions:
   hello:
@@ -37,6 +43,18 @@ functions:
       - http:
           method: GET
           path: /auction
+  getAuction:
+    handler: src/index.getAuction
+    events:
+      - http:
+          method: GET
+          path: /auction/{id}
+  placeBid:
+    handler: src/index.placeBid
+    events:
+      - http:
+          method: PATCH
+          path: /auction/{id}/bid
 
 custom:
   AuctionsTable:

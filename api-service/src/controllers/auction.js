@@ -1,31 +1,28 @@
 const { v4: uuid } = require('uuid')
-const AWS = require('aws-sdk')
-
-const middy = require('@middy/core')
-const httpBodyParser = require('@middy/http-json-body-parser')
-const httpEventNormalizer = require('@middy/http-event-normalizer')
-const httpErrorHandler = require('@middy/http-error-handler')
 const httpError = require('http-errors')
+const commonMiddleware = require('../middleware/commonMiddleware')
 
-const db = new AWS.DynamoDB.DocumentClient()
+
+const auctionDB = require('../db/auction')
+const schema = require('../schema/auctions.json')
 
 let createAuction = async function (event, context) {
   try {
     const body = event.body
-    const createdAt = new Date()
+    const now = new Date()
+    const endDate = new Date()
+    endDate.setHours(now.getHours() + 1)
     const auction = {
       id: uuid(),
       title: body.title,
       status: 'OPEN',
-      createdAt: createdAt.toISOString()
+      createdAt: now.toISOString(),
+      endingAt: endDate.toISOString(),
+      highestBid: {
+        amount: 0
+      }
     }
-
-    let res = await db
-      .put({
-        TableName: process.env.AUCTIONS_TABLE_NAME,
-        Item: auction
-      })
-      .promise()
+    await auctionDB.createAuction(auction)
     return {
       statusCode: 201,
       body: JSON.stringify(auction)
@@ -35,14 +32,15 @@ let createAuction = async function (event, context) {
     return new httpError.InternalServerError(error)
   }
 }
+
 let getAuctions = async function (event, context) {
   try {
-    let res = await db.scan({
-        TableName: process.env.AUCTIONS_TABLE_NAME
-    }).promise()
+    let { status } = event.queryStringParameters
+    if(!status) status = 'OPEN'
+    let auctions = await auctionDB.getAllAuction(status)
     return {
-        statusCode: 200,
-        body: JSON.stringify(res.Items)
+      statusCode: 200,
+      body: JSON.stringify(auctions)
     }
   } catch (error) {
     console.error(error)
@@ -50,11 +48,62 @@ let getAuctions = async function (event, context) {
   }
 }
 
-exports.createAuction = middy(createAuction)
-  .use(httpBodyParser())
-  .use(httpEventNormalizer())
-  .use(httpErrorHandler());
-exports.getAuctions = middy(getAuctions)
-  .use(httpBodyParser())
-  .use(httpEventNormalizer())
-  .use(httpErrorHandler());
+let getAuction = async function (event, context) {
+  try {
+    const { id } = event.pathParameters
+    let auction = await auctionDB.getAuctionById({ id })
+    if (!auction) {
+      return new httpError.NotFound(`Auction with ${id} not found.`)
+    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify(auction)
+    }
+  } catch (error) {
+    console.error(error)
+    return new httpError.InternalServerError(error)
+  }
+}
+
+let placeBid = async function (event, context) {
+  try {
+    const { id } = event.pathParameters
+    const { amount } = event.body
+    let auction = await auctionDB.getAuctionById({ id })
+    if (!auction) {
+      return new httpError.NotFound(`Auction with ${id} not found.`)
+    }
+    if (amount <= auction.highestBid.amount) {
+      return new httpError.Forbidden(
+        `Your bid must be higher than ${auction.highestBid.amount}`
+      )
+    }
+    if (auction.status !== 'OPEN') {
+      return new httpError.Forbidden(`Auction is not in open state.`)
+    }
+    const params = {
+      Key: { id },
+      UpdateExpression: 'SET highestBid.amount = :amount',
+      ExpressionAttributeValues: {
+        ':amount': amount
+      },
+      ReturnValues: 'ALL_NEW'
+    }
+    let res = await auctionDB.updateAuction(params)
+    if (!res) {
+      return new httpError.NotFound(`Auction with ${id} not found.`)
+    }
+    return {
+      statusCode: 200,
+      body: JSON.stringify(res)
+    }
+  } catch (error) {
+    console.error(error)
+    return new httpError.InternalServerError(error)
+  }
+}
+
+exports.createAuction = commonMiddleware(createAuction)
+exports.getAuctions = commonMiddleware(getAuctions)
+exports.getAuction = commonMiddleware(getAuction)
+exports.placeBid = commonMiddleware(placeBid)

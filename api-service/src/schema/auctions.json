@@ -1,0 +1,19 @@
+{
+  "getAuctions": {
+    "type": "strict",
+    "properties": {
+      "queryStringParameters": {
+        "type": "strict",
+        "properties": {
+          "status": {
+            "type": "string",
+            "enum": ["OPEN", "CLOSED"],
+            "default": "OPEN"
+          }
+        }
+      }
+    },
+    "required": ["queryStringParameters"]
+  }
+}
+
