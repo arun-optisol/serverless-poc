@@ -1,0 +1,36 @@
+{
+    "name": "auction-schedule-service",
+    "version": "1.0.0",
+    "description": "serverless learning optisol",
+    "main": "index.js",
+    "scripts": {
+      "test": "echo \"Error: no test specified\" && exit 1",
+      "build": "webpack",
+      "start": "webpack serve"
+    },
+    "keywords": [
+      "serverless",
+      "lambda"
+    ],
+    "author": "arun",
+    "license": "ISC",
+    "type": "commonjs",
+    "devDependencies": {
+      "babel": "^6.23.0",
+      "babel-core": "^6.26.3",
+      "babel-loader": "^9.1.2",
+      "babel-plugin-transform-runtime": "^6.23.0",
+      "babel-polyfill": "^6.26.0",
+      "babel-preset-env": "^1.7.0",
+      "serverless": "^3.33.0",
+      "serverless-webpack": "^5.11.0",
+      "webpack": "^5.88.1",
+      "webpack-cli": "^5.1.4",
+      "webpack-dev-server": "^4.15.1",
+      "webpack-node-externals": "^3.0.0"
+    },
+    "dependencies": {
+      "aws-sdk": "^2.1409.0"
+    }
+  }
+  

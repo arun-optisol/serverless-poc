@@ -1,0 +1,36 @@
+service: schedule-service
+frameworkVersion: '3'
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  deploymentBucket:
+    name: arun-practice
+  deploymentPrefix: lambda/auction-service
+  stage: ${opt:stage, 'dev'}
+  region: ap-south-1
+  environment:
+    AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.Name}
+  iamRoleStatements:
+    - Effect: Allow
+      Action: 
+        - dynamodb:PutItem
+        - dynamodb:Scan
+        - dynamodb:GetItem
+        - dynamodb:UpdateItem
+        - dynamodb:Query
+      Resource: 
+        - ${self:custom.AuctionsTable.Arn}
+        - !Join ['/', [ '${self:custom.AuctionsTable.Arn}', 'index', 'statusAndEndDate' ]]
+        
+functions:
+  processAuctions:
+    handler: index.handler
+    events:
+      - schedule: rate(10 minutes)
+
+custom:
+  AuctionsTable:
+    Arn:
+      Fn::ImportValue: AuctionsTableArn-${self:provider.stage}
+    Name: AuctionsTable-${self:provider.stage}
