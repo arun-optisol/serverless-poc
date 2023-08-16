@@ -1,0 +1,329 @@
+{
+	"info": {
+		"_postman_id": "a91833f2-91d9-4f26-9939-2b90e9832e8a",
+		"name": "arun-serverless-poc",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "22888437"
+	},
+	"item": [
+		{
+			"name": "auth",
+			"item": [
+				{
+					"name": "sign up",
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"tempuser1608@mailinator.com\",\r\n    \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://idz1rocj49.execute-api.ap-south-1.amazonaws.com/dev/signup",
+							"protocol": "https",
+							"host": [
+								"idz1rocj49",
+								"execute-api",
+								"ap-south-1",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"signup"
+							]
+						}
+					},
+					"response": []
+				},
+				{
+					"name": "sign in",
+					"event": [
+						{
+							"listen": "test",
+							"script": {
+								"exec": [
+									"var jsonData = pm.response.json();\r",
+									"\r",
+									"if (jsonData.AuthenticationResult) {\r",
+									"    pm.collectionVariables.set(\"IdToken\", jsonData.AuthenticationResult.IdToken);    \r",
+									"}\r",
+									""
+								],
+								"type": "text/javascript"
+							}
+						}
+					],
+					"request": {
+						"method": "POST",
+						"header": [],
+						"body": {
+							"mode": "raw",
+							"raw": "{\r\n    \"email\": \"tempuser1608@mailinator.com\",\r\n    \"password\": \"12345678\"\r\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "https://idz1rocj49.execute-api.ap-south-1.amazonaws.com/dev/signin",
+							"protocol": "https",
+							"host": [
+								"idz1rocj49",
+								"execute-api",
+								"ap-south-1",
+								"amazonaws",
+								"com"
+							],
+							"path": [
+								"dev",
+								"signin"
+							]
+						}
+					},
+					"response": []
+				}
+			]
+		},
+		{
+			"name": "hello",
+			"request": {
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://vovjo6qgv1.execute-api.ap-south-1.amazonaws.com/dev/hello",
+					"protocol": "https",
+					"host": [
+						"vovjo6qgv1",
+						"execute-api",
+						"ap-south-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"dev",
+						"hello"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "create auction",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{IdToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "POST",
+				"header": [],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"title\": \"Auction PoC 1\"\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://vovjo6qgv1.execute-api.ap-south-1.amazonaws.com/dev/auction",
+					"protocol": "https",
+					"host": [
+						"vovjo6qgv1",
+						"execute-api",
+						"ap-south-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"dev",
+						"auction"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get auctions",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"var jsonData = pm.response.json();\r",
+							"\r",
+							"if (jsonData && jsonData.length) {\r",
+							"    pm.collectionVariables.set(\"auctionId\", jsonData[0].id);    \r",
+							"}\r",
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{IdToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [],
+				"url": {
+					"raw": "https://vovjo6qgv1.execute-api.ap-south-1.amazonaws.com/dev/auction?status=OPEN",
+					"protocol": "https",
+					"host": [
+						"vovjo6qgv1",
+						"execute-api",
+						"ap-south-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"dev",
+						"auction"
+					],
+					"query": [
+						{
+							"key": "status",
+							"value": "OPEN"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "get auction by id",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{IdToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"url": {
+					"raw": "https://vovjo6qgv1.execute-api.ap-south-1.amazonaws.com/dev/auction/:id",
+					"protocol": "https",
+					"host": [
+						"vovjo6qgv1",
+						"execute-api",
+						"ap-south-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"dev",
+						"auction",
+						":id"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{auctionId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "place bid",
+			"request": {
+				"auth": {
+					"type": "bearer",
+					"bearer": [
+						{
+							"key": "token",
+							"value": "{{IdToken}}",
+							"type": "string"
+						}
+					]
+				},
+				"method": "PATCH",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text",
+						"disabled": true
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"amount\": 50\r\n}",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "https://vovjo6qgv1.execute-api.ap-south-1.amazonaws.com/dev/auction/:id/bid",
+					"protocol": "https",
+					"host": [
+						"vovjo6qgv1",
+						"execute-api",
+						"ap-south-1",
+						"amazonaws",
+						"com"
+					],
+					"path": [
+						"dev",
+						"auction",
+						":id",
+						"bid"
+					],
+					"variable": [
+						{
+							"key": "id",
+							"value": "{{auctionId}}"
+						}
+					]
+				}
+			},
+			"response": []
+		}
+	],
+	"variable": [
+		{
+			"key": "IdToken",
+			"value": ""
+		},
+		{
+			"key": "auctionId",
+			"value": ""
+		}
+	]
+}
