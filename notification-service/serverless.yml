@@ -1,0 +1,54 @@
+service: notification-service
+frameworkVersion: "3"
+useDotenv: true
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  deploymentBucket:
+    name: arun-practice
+  deploymentPrefix: lambda/auction-service
+  stage: ${opt:stage, 'dev'}
+  region: ap-south-1
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - ses:SendEmail
+      Resource: arn:aws:ses:*
+    - Effect: Allow
+      Action:
+        - sqs:ReceiveMessage
+      Resource: ${self:custom.mailQueue.arn}
+
+resources:
+  Resources:
+    MailQueue:
+      Type: AWS::SQS::Queue
+      Properties:
+        QueueName: ${self:custom.mailQueue.name}
+  Outputs:
+    MailQueueArn:
+      Value: ${self:custom.mailQueue.arn}
+      Export:
+        Name: ${self:custom.mailQueue.name}-Arn
+    MailQueueUrl:
+      Value: ${self:custom.mailQueue.url}
+      Export:
+        Name: ${self:custom.mailQueue.name}-Url
+
+functions:
+  sendMail:
+    handler: src/index.sendMail
+    environment:
+      FROM_EMAIL: ${env:FROM_EMAIL}
+    events:
+      - sqs:
+          arn: ${self:custom.mailQueue.arn}
+          batchSize: 10
+
+custom:
+  envVars: ${file(config.js)}
+  mailQueue:
+    name: MailQueue-${self:provider.stage}
+    arn: !GetAtt MailQueue.Arn
+    url: !Ref MailQueue
