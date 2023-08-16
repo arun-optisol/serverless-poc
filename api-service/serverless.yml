@@ -1,5 +1,5 @@
 service: api-service
-frameworkVersion: '3'
+frameworkVersion: "3"
 
 provider:
   name: aws
@@ -19,7 +19,7 @@ resources:
     AuctionsTable: ${file(resources/AuctionsTableResource.yml):AuctionsTableResource}
   Outputs:
     AuctionsTableArn:
-      Description: 'AuctionsTable arn'
+      Description: "AuctionsTable arn"
       Value: !GetAtt AuctionsTable.Arn
       Export:
         Name: AuctionsTableArn-${self:provider.stage}
@@ -37,7 +37,7 @@ functions:
       - http:
           method: POST
           path: /auction
-          authorizer: 
+          authorizer:
             name: AuctionAuth
             type: COGNITO_USER_POOLS
             arn: "${self:custom.CognitoUserPool.Arn}"
@@ -49,7 +49,7 @@ functions:
       - http:
           method: GET
           path: /auction
-          authorizer: 
+          authorizer:
             name: AuctionAuth
             type: COGNITO_USER_POOLS
             arn: "${self:custom.CognitoUserPool.Arn}"
@@ -61,7 +61,7 @@ functions:
       - http:
           method: GET
           path: /auction/{id}
-          authorizer: 
+          authorizer:
             name: AuctionAuth
             type: COGNITO_USER_POOLS
             arn: "${self:custom.CognitoUserPool.Arn}"
@@ -73,7 +73,7 @@ functions:
       - http:
           method: PATCH
           path: /auction/{id}/bid
-          authorizer: 
+          authorizer:
             name: AuctionAuth
             type: COGNITO_USER_POOLS
             arn: "${self:custom.CognitoUserPool.Arn}"
