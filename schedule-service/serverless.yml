@@ -11,6 +11,8 @@ provider:
   region: ap-south-1
   environment:
     AUCTIONS_TABLE_NAME: ${self:custom.AuctionsTable.Name}
+    MAIL_QUEUE_URL: ${self:custom.MailQueue.Url}
+    MAIL_QUEUE_ARN: ${self:custom.MailQueue.Arn}
   iamRoleStatements:
     - Effect: Allow
       Action: 
@@ -22,6 +24,10 @@ provider:
       Resource: 
         - ${self:custom.AuctionsTable.Arn}
         - !Join ['/', [ '${self:custom.AuctionsTable.Arn}', 'index', 'statusAndEndDate' ]]
+    - Effect: Allow
+      Action: 
+        - sqs:SendMessage
+      Resource: ${self:custom.MailQueue.Arn}
         
 functions:
   processAuctions:
@@ -34,3 +40,6 @@ custom:
     Arn:
       Fn::ImportValue: AuctionsTableArn-${self:provider.stage}
     Name: AuctionsTable-${self:provider.stage}
+  MailQueue:
+    Arn: ${cf:notification-service-${self:provider.stage}.MailQueueArn}
+    Url: ${cf:notification-service-${self:provider.stage}.MailQueueUrl}
