@@ -1,0 +1,91 @@
+service: auth-service
+frameworkVersion: "3"
+
+provider:
+  name: aws
+  runtime: nodejs18.x
+  deploymentBucket:
+    name: arun-practice
+  deploymentPrefix: lambda/auction-service
+  stage: ${opt:stage, 'dev'}
+  region: ap-south-1
+  environment:
+    userPoolId: { Ref: UserPool }
+    userPoolClientId: { Ref: UserPoolClient }
+  iamRoleStatements:
+    - Effect: Allow
+      Action:
+        - cognito-idp:*
+      Resource: ${self:custom.UserPool.Arn}
+
+resources:
+  Resources:
+    UserPool:
+      Type: AWS::Cognito::UserPool
+      Properties:
+        UserPoolName: auction-auth-service
+        Schema:
+          - Name: email
+            Required: true
+            Mutable: true
+        Policies:
+          PasswordPolicy:
+            MinimumLength: 8
+        AutoVerifiedAttributes:
+          - "email"
+        AdminCreateUserConfig:
+          AllowAdminCreateUserOnly: false
+    UserPoolClient:
+      Type: AWS::Cognito::UserPoolClient
+      Properties:
+        ClientName: auction-auth-service-test
+        GenerateSecret: false
+        UserPoolId: { Ref: UserPool }
+        AccessTokenValidity: 1
+        IdTokenValidity: 1
+        TokenValidityUnits:
+          AccessToken: "hours"
+          IdToken: "hours"
+        ExplicitAuthFlows:
+          - "ADMIN_NO_SRP_AUTH"
+          - "USER_PASSWORD_AUTH"
+    OnCognitoSignupPermission:
+      Type: 'AWS::Lambda::Permission'
+      Properties:
+        Action: "lambda:InvokeFunction"
+        FunctionName: ${self:service}-${self:provider.stage}-preSignUpTrigger
+        Principal: "cognito-idp.amazonaws.com"
+        SourceArn:
+          Fn::Join: [ "", [ "arn:aws:cognito-idp", ":", Ref: "AWS::Region", ":", Ref: "AWS::AccountId", ":", "userpool/", "*" ] ]
+  Outputs:
+    UserPoolArn:
+      Description: 'UserPool arn'
+      Value: !GetAtt UserPool.Arn
+      Export:
+        Name: UserPoolArn-${self:provider.stage}
+
+functions:
+  preSignUpTrigger:
+    handler: src/index.preSignUp
+    events:
+      - cognitoUserPool:
+          pool: auction-auth-service
+          trigger: PreSignUp
+          existing: true
+          forceDeploy: true
+  signin:
+    handler: src/index.signIn
+    events:
+      - http:
+          path: /signin
+          method: POST
+  signup:
+    handler: src/index.signUp
+    events:
+      - http:
+          path: /signup
+          method: POST
+
+custom:
+  UserPool:
+    Arn: !GetAtt UserPool.Arn
