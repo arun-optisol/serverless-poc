@@ -20,9 +20,7 @@ module.exports.handler = async (event) => {
         '#status': 'status'
       }
     }
-    console.log(TableName, ":::", QueueUrl);
     const auctionsToClose = await db.query(params).promise()
-    console.log("auctionsToClose:::::",JSON.stringify(auctionsToClose));
     if (auctionsToClose.Items.length) {
       let sellerNotifications = []
       let bidderNotifications = []
@@ -33,7 +31,7 @@ module.exports.handler = async (event) => {
           sellerNotifications.push(SQS.sendMessage({
             QueueUrl,
             MessageBody: JSON.stringify({
-              subject: 'Your item has been sold.',
+              subject: `Your item has been sold. Auction Id #${auction.id}`,
               recipient: seller,
               body: `Great! Your item ${title} has been sold for ${amount}.`
             })
@@ -42,7 +40,7 @@ module.exports.handler = async (event) => {
             bidderNotifications.push(SQS.sendMessage({
               QueueUrl,
               MessageBody: JSON.stringify({
-                subject: 'You won a auction',
+                subject: `You won a auction. Auction Id #${auction.id}`,
                 recipient: bidder,
                 body: 'You won a auction'
               })
@@ -63,13 +61,10 @@ module.exports.handler = async (event) => {
           })
           .promise()
       })
-      console.log("finalAuctionsToClose:::::",JSON.stringify(finalAuctionsToClose));
       await Promise.all(finalAuctionsToClose)
-      console.log("sellerNotifications:::::",JSON.stringify(sellerNotifications));
       if(sellerNotifications.length){
         await Promise.all(sellerNotifications)
       }
-      console.log("bidderNotifications:::::",JSON.stringify(bidderNotifications));
       if(bidderNotifications.length){
         await Promise.all(bidderNotifications)
       }
