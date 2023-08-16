@@ -37,26 +37,53 @@ functions:
       - http:
           method: POST
           path: /auction
+          authorizer: 
+            name: AuctionAuth
+            type: COGNITO_USER_POOLS
+            arn: "${self:custom.CognitoUserPool.Arn}"
+            claims:
+              - "email"
   getAuctions:
     handler: src/index.getAuctions
     events:
       - http:
           method: GET
           path: /auction
+          authorizer: 
+            name: AuctionAuth
+            type: COGNITO_USER_POOLS
+            arn: "${self:custom.CognitoUserPool.Arn}"
+            claims:
+              - "email"
   getAuction:
     handler: src/index.getAuction
     events:
       - http:
           method: GET
           path: /auction/{id}
+          authorizer: 
+            name: AuctionAuth
+            type: COGNITO_USER_POOLS
+            arn: "${self:custom.CognitoUserPool.Arn}"
+            claims:
+              - "email"
   placeBid:
     handler: src/index.placeBid
     events:
       - http:
           method: PATCH
           path: /auction/{id}/bid
+          authorizer: 
+            name: AuctionAuth
+            type: COGNITO_USER_POOLS
+            arn: "${self:custom.CognitoUserPool.Arn}"
+            claims:
+              - "email"
 
 custom:
   AuctionsTable:
     name: !Ref AuctionsTable
     arn: !GetAtt AuctionsTable.Arn
+  CognitoUserPool:
+    Arn:
+      Fn::ImportValue: UserPoolArn-${self:provider.stage}
